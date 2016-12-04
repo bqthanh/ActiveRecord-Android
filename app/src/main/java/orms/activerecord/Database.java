@@ -13,7 +13,6 @@ import java.util.Map;
 
 import orms.activerecord.sql.SQLScripts;
 import utils.OrmLog;
-import utils.SQLiteUtils;
 
 /**
  * Created by thanhbui on 2016/11/17.
@@ -29,6 +28,58 @@ public class Database  {
         open();
     }
 
+    //共通インタフェース
+    public static List rawQuery(String sql, String[] params) {
+        List<List<String>> toRet = new ArrayList<>();
+        int cnt;
+        List<String> row;
+
+        Cursor c;
+        try {
+            c = db.rawQuery(sql, params);
+        } catch (Exception e) {
+            OrmLog.log(e.getLocalizedMessage());
+            return null;
+        }
+        cnt = c.getColumnCount();
+
+        while(c.moveToNext()) {
+            row = new ArrayList<>();
+            for (int i = 0; i < cnt; i++) {
+                row.add(c.getString(i));
+            }
+            toRet.add(row);
+        }
+
+        return toRet;
+    }
+
+    public static List queryWithNoKey(String sql, String[] params) {
+        List<Map<String, String>> toRet = new ArrayList<>();
+        int cnt;
+        Map<String, String> row;
+
+        Cursor c;
+        try {
+            c = db.rawQuery(sql, params);
+        } catch (Exception e) {
+            OrmLog.log(e.getLocalizedMessage());
+            return null;
+        }
+        cnt = c.getColumnCount();
+
+        while(c.moveToNext()) {
+            row = new HashMap<String, String>();
+            for (int i = 0; i < cnt; i++) {
+                row.put(c.getColumnName(i), c.getString(i));
+            }
+            toRet.add(row);
+        }
+
+        return toRet;
+    }
+
+    //個別インタフェース
     public static Long insert(String table, ContentValues values) {
         long id = -1;
         db.beginTransaction();
@@ -77,35 +128,6 @@ public class Database  {
     //クリエする
     public static void execute(String sql) { db.execSQL(sql); }
 
-    //インタフェース
-    public static Cursor rawQuery(String sql, String[] params) {
-        return db.rawQuery(sql, params);
-    }
-
-    public List queryWithNoKey(String sql, String[] params) {
-        Cursor cursor = db.rawQuery(sql, params);
-
-        List<Map<String, String>> results = new ArrayList<>();
-        int index, count;
-        count = cursor.getColumnCount();
-
-        index = 0;
-        Map<String, String> row = new HashMap<String, String>();
-
-        while(cursor.moveToNext()) {
-            //OrmLog.log("value: " + cursor.getString(index));
-            index ++;
-            if (index >= count) {
-                index = 0;
-                results.add(row);
-                row = new HashMap<String, String>();
-            }
-            row.put(cursor.getColumnName(index - 1), cursor.getString(index - 1));
-        }
-
-        return results;
-    }
-
     //クラスタイプからモデール情報を取得する
     public static Model.ModelManager getTableManger(Class<? extends Model> type) {
         return dbHelper.getDbBuilder()
@@ -122,6 +144,9 @@ public class Database  {
 
     //データベースヘルプ
     static class DatabaseHelper extends SQLiteOpenHelper {
+        //モデール定義からデータベースを自動に作成する
+        public static boolean AUTO_CREATE_DB = true;
+
         private DatabaseBuilder dbBuilder;
 
         public DatabaseHelper(Context c, DatabaseBuilder dbBuilder) {
@@ -146,15 +171,15 @@ public class Database  {
 
             db.beginTransaction();
             try {
-                if (SQLiteUtils.AUTO_CREATE_DB = true) {
-                    OrmLog.log("upgradeFromModel !");
+                if (AUTO_CREATE_DB == true) {
+                    OrmLog.log("FromModel !");
                     upgradeFromModel(db);
                 } else {
-                    OrmLog.log("upgradeFromSQLScript !");
+                    OrmLog.log("FromSQLScript !");
                     upgradeFromSQLScript(db, oldversion, newVersion);
                 }
 
-                OrmLog.log("executeMigrations !");
+                OrmLog.log("Execute migrations has finish !");
                 ret = true;
                 db.setTransactionSuccessful();
             } catch (Exception e) {
@@ -190,14 +215,19 @@ public class Database  {
 
         //SQLスクリプからアップグレード
         public void upgradeFromSQLScript(SQLiteDatabase db, int oldVersion, int newVersion) throws Exception {
-            int index = 0;
+            int index = 1;
 
             for (String sql : SQLScripts.getScripts()) {
                 if(index > oldVersion && index <= newVersion) {
+                    OrmLog.log("SQLCreate: " + sql);
                     db.execSQL(sql);
                 }
                 index ++;
             }
+        }
+
+        public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            OrmLog.log("onDowngrade !");
         }
 
         public DatabaseBuilder getDbBuilder() { return dbBuilder; }

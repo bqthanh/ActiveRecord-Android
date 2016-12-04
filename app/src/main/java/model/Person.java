@@ -24,15 +24,18 @@ public class Person extends Model {
     @Column(name="t_gender")
     public Boolean gender;
 
-    @Column(name="t_birthday")
-    public String birthday;
+    @Column(name="dt_birthday")
+    public Date birthday;
 
     @Column(name="dt_created")
     public Date dt_created;
 
+    @Column(name="t_mon")
+    public Short mon;
+
     public Person() {};
 
-    public Person(String name, String email, String address, Boolean gender, String birthday) {
+    public Person(String name, String email, String address, Boolean gender, Date birthday) {
         this.name = name;
         this.email = email;
         this.address = address;

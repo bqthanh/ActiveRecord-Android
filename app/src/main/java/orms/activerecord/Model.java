@@ -3,10 +3,11 @@ package orms.activerecord;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
 
 import java.lang.reflect.Field;
-import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import orms.activerecord.anotation.Column;
@@ -37,6 +38,18 @@ public abstract class Model implements IModel {
     //オブジェクトidを取得する
     public long getId() { return id; }
 
+    //対象オブジェクトと比較する
+    public boolean equals(Object obj) {
+        if (obj instanceof Model && this.id != 0) {
+            final Model other = (Model) obj;
+
+            return this.id == other.id
+                    && (this.table.getName().equals(other.table.getName()));
+        } else {
+            return this == obj;
+        }
+    }
+
     //データベースにモデルオブジェクトを保存する
     public void save() {
         List<Field> columns = table.getColumnFields();
@@ -53,8 +66,8 @@ public abstract class Model implements IModel {
                 colName = column.getAnnotation(Column.class).name();
             }
             try {
-                values.put(colName,
-                        String.valueOf(column.get(this)));
+                Object obj = column.get(this);
+                values.put(colName, (obj == null) ? "" : String.valueOf(obj));
             } catch (Exception ex) {
                 OrmLog.log(ex.getLocalizedMessage());
             }
@@ -73,24 +86,11 @@ public abstract class Model implements IModel {
         return toRet;
     }
 
-    //対象オブジェクトと比較する
-    public boolean equals(Object obj) {
-        if (obj instanceof Model && this.id != 0) {
-            final Model other = (Model) obj;
-
-            return this.id == other.id
-                    && (this.table.getName().equals(other.table.getName()));
-        } else {
-            return this == obj;
-        }
-    }
-
     /*
      *クラスインタフェース
      */
     public static <T extends Model> T findById(long id) {
         T entity = null;
-        OrmLog.log("T123456: " + type);
 
         try {
             entity = (T) type.newInstance();
@@ -98,9 +98,9 @@ public abstract class Model implements IModel {
             OrmLog.log(ex.getLocalizedMessage());
         }
 
-        Cursor cursor = null;
+        Cursor c = null;
         try {
-            cursor = Database.query(entity.table.getName(), null, entity.table.id + " = ?",
+            c = Database.query(entity.table.getName(), null, entity.table.id + " = ?",
                     new String[] { String.valueOf(id) });
         } catch (Exception e) {
             OrmLog.log(e.getLocalizedMessage());
@@ -108,17 +108,59 @@ public abstract class Model implements IModel {
 
         entity = null;
         try {
-            while (cursor.moveToNext()) {
+            while (c.moveToNext()) {
                 entity = (T) type.newInstance();
-                entity.loadRecord(cursor);
+                entity.loadRecord(c);
+                break;
             }
         } catch (Exception e) {
             OrmLog.log(e.getLocalizedMessage());
         }
         finally {
-            cursor.close();
+            c.close();
         }
         return entity;
+    }
+
+    /*
+     *クラスインタフェース
+     */
+    public static <T extends Model> List<T> findByIds(long[] ids) {
+        T entity = null;
+
+        try {
+            entity = (T) type.newInstance();
+        } catch (Exception ex) {
+            OrmLog.log(ex.getLocalizedMessage());
+        }
+
+        List<T> toRet = new ArrayList<>();
+        Cursor c = null;
+        try {
+            String idList = "";
+            for (long id : ids) {
+                idList += ("".equals(idList)) ? id : ", " + id;
+            }
+
+            c = Database.query(entity.table.getName(), null,
+                    String.format(entity.table.id + " IN ( %s )", idList), null);
+        } catch (Exception e) {
+            OrmLog.log(e.getLocalizedMessage());
+        }
+
+        try {
+            while (c.moveToNext()) {
+                entity = (T) type.newInstance();
+                entity.loadRecord(c);
+                toRet.add(entity);
+            }
+        } catch (Exception e) {
+            OrmLog.log(e.getLocalizedMessage());
+        }
+        finally {
+            c.close();
+        }
+        return toRet;
     }
 
     public static <T extends Model> List<T> find(String whereClause, String[] whereArgs) {
@@ -147,7 +189,7 @@ public abstract class Model implements IModel {
         return toRet;
     }
 
-    public <T extends Model> List<T> findByColumn(String column, String value) throws Exception {
+    public static <T extends Model> List<T> findByColumn(String column, String value) {
         return find(String.format("%s = ?", column),
                 new String[] { value });
     }
@@ -156,35 +198,8 @@ public abstract class Model implements IModel {
         return find(null, null);
     }
 
-    public static <T extends Model> List<T> rawQuery(String sql, String[] params) {
-        T entity = null;
-
-        try {
-            entity = (T)type.newInstance();
-        } catch (Exception e) {
-            OrmLog.log(e.getLocalizedMessage());
-        }
-
-        List<T> toRet = new ArrayList<T>();
-        Cursor c = Database.rawQuery(sql, params);
-
-        try {
-            while (c.moveToNext()) {
-                entity = (T)type.newInstance();
-                entity.loadRecord(c);
-                toRet.add(entity);
-            }
-        } catch (Exception e) {
-            OrmLog.log(e.getLocalizedMessage());
-        }
-        finally {
-            c.close();
-        }
-        return toRet;
-    }
-
     //レコード削除する
-    public static <T extends Model> long delete(String whereClause, String[] whereArgs) {
+    public static <T extends Model> int delete(String whereClause, String[] whereArgs) {
         T entity = null;
         try {
             entity = (T) type.newInstance();
@@ -194,7 +209,7 @@ public abstract class Model implements IModel {
         return Database.delete(entity.table.getName(), whereClause, whereArgs);
     }
 
-    public static <T extends Model> long deleteById(long id) {
+    public static <T extends Model> int deleteById(long id) {
         T entity = null;
         try {
             entity = (T) type.newInstance();
@@ -205,24 +220,23 @@ public abstract class Model implements IModel {
                 new String[] {String.valueOf(id)});
     }
 
-    public static <T extends Model> long deleteByIds(long[] ids) {
+    public static <T extends Model> int deleteByIds(long[] ids) {
         T entity = null;
         try {
             entity = (T) type.newInstance();
         } catch (Exception e) {
             OrmLog.log(e.getLocalizedMessage());
         }
-        String idList = null;
+        String idList = "";
         for (long id : ids) {
-            idList += (idList == null) ? id : ", " + id;
+            idList += ("".equals(idList)) ? id : ", " + id;
         }
 
         return delete(String.format(entity.table.id + " IN ( %s )", idList) , null);
     }
 
     //カラムデータに一致するレコドを削除する
-    public static <T extends Model> long deleteByColumn(Class<T> type,
-                                                        String column, String value) throws Exception {
+    public static int deleteByColumn(String column, String value) {
         return delete(String.format("%s = ?", column),
                 new String[] { value });
     }
@@ -232,45 +246,49 @@ public abstract class Model implements IModel {
     }
 
     //カソールからレコードコラムデータを取得する
-    void loadRecord(Cursor cursor) throws Exception {
+    void loadRecord(Cursor c) throws Exception {
+        String typeString = null, colName = null;
+
         for (Field field : table.getColumnFields()) {
             field.setAccessible(true);
             try {
-                String typeString = field.getType().getName();
-                String colName = (SQLiteUtils.ID.equals(field.getName())) ? table.id
+                typeString = field.getType().getName();
+                colName = (SQLiteUtils.ID.equals(field.getName())) ? table.id
                         : field.getAnnotation(Column.class).name();
 
                 if (typeString.equals("long")) {
-                    field.set(this, cursor.getLong(cursor
+                    field.set(this, c.getLong(c
                             .getColumnIndex(colName)));
                 } else if (typeString.equals("java.lang.String")) {
-                    String val = cursor.getString(cursor.getColumnIndex(colName));
+                    String val = c.getString(c.getColumnIndex(colName));
                     field.set(this, val.equals("null") ? null : val);
                 } else if (typeString.equals("double")) {
-                    field.setDouble(this, cursor.getDouble(cursor
+                    field.setDouble(this, c.getDouble(c
                             .getColumnIndex(colName)));
                 } else if (typeString.equals("java.lang.Boolean")) {
-                    field.set(this, cursor.getString(
-                           cursor.getColumnIndex(colName)).equals("true"));
+                    field.set(this, c.getString(
+                           c.getColumnIndex(colName)).equals("true"));
                 } else if (typeString.equals("[B")) {
-                    field.set(this, cursor.getBlob(cursor.getColumnIndex(colName)));
+                    field.set(this, c.getBlob(c.getColumnIndex(colName)));
                 } else if (typeString.equals("int")) {
-                    field.setInt(this, cursor.getInt(cursor
+                    field.setInt(this, c.getInt(c
                             .getColumnIndex(colName)));
                 } else if (typeString.equals("float")) {
-                    field.setFloat(this, cursor.getFloat(cursor
+                    field.setFloat(this, c.getFloat(c
                             .getColumnIndex(colName)));
-                } else if (typeString.equals("short")) {
-                    field.setShort(this, cursor.getShort(cursor
+                } else if (typeString.equals("java.lang.Short")) {
+                    field.set(this, c.getShort(c
                             .getColumnIndex(colName)));
-                } else if (typeString.equals("java.sql.Timestamp")) {
-                    long l = cursor.getLong(cursor.getColumnIndex(colName));
-                    field.set(this, new Timestamp(l));
+                } else if (typeString.equals("java.util.Date")) {
+                    String s = c.getString(c.getColumnIndex(colName));
+                    if (s != null && !TextUtils.isEmpty(s)) {
+                        field.set(this, new Date(s));
+                    }
                 } else
                     throw new Exception(
                             "データタイプ以外：" + typeString + " : " + colName);
             } catch (IllegalArgumentException e) {
-                OrmLog.log("モデール：" + e.getLocalizedMessage());
+                OrmLog.log("モデール" + typeString + " : " + e.getLocalizedMessage());
             }
         }
     }

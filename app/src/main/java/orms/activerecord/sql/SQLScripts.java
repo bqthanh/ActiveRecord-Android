@@ -12,7 +12,7 @@ public class SQLScripts {
     public static List<String> getScripts() {
         List<String> scripts = new ArrayList<>();
 
-        //Version v0
+        //Version v1
         scripts.add("DROP TABLE IF EXISTS `t_advice`;\n"+
                 "/*!40101 SET @saved_cs_client     = @@character_set_client */;\n"+
                 "/*!40101 SET character_set_client = utf8 */;\n"+
@@ -42,7 +42,7 @@ public class SQLScripts {
                 "  CONSTRAINT `FK_advice_manager` FOREIGN KEY (`dietician_id`) REFERENCES `t_manager` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION\n"+
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;");
 
-        //Version 1.0
+        //Version 2
         scripts.add("DROP TABLE IF EXISTS `t_category`;\n" +
                 "/*!40101 SET @saved_cs_client     = @@character_set_client */;\n" +
                 "/*!40101 SET character_set_client = utf8 */;\n" +

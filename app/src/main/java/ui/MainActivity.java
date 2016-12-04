@@ -3,7 +3,9 @@ package ui;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
+import java.util.Date;
 import java.util.List;
 
 import model.Person;
@@ -24,63 +26,70 @@ public class MainActivity extends AppCompatActivity {
         initilize(this);
     }
 
+    //データベースを初期する
     public static void initilize(Context c) {
+        //データベース名
         String dbname = "db_name";
-        int version = 1;
+        //バージョンは１以上を指定してください
+        int version = 2;
 
         DatabaseBuilder dbBuilder = new DatabaseBuilder(dbname, version);
+        //テブール一覧を入力する
         dbBuilder.addModel(Person.class);
         db = new Database(c, dbBuilder);
 
-        long pid;
         Person p;
         for (int i = 0; i < 10; i++) {
-            p = new Person("thanhbui" + i, "t.buiquang@bs" + i, "Tokyo" + i, true, "1991//11/09");
+            Date dt = null;
+            if (i % 2 == 0) {
+                dt = new Date();
+            }
+            p = new Person("thanhbui" + i, "t.buiquang@bs" + i, "東京" + i, true, dt);
             p.save();
-
             p.address = p.address + "港区芝浦";
-            p.save();
 
+            p.save();
             if (i < 5) {
                 p.delete();
             }
         }
 
-        p = new Person("huong", "huongbt@bs", "BacGiang", false, "1994//01/20");
-        p.save();
+        List results = Database.queryWithNoKey("SELECT t_id, t_name, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
+        Log.e("TAG", "Results: " + results);
 
-        p.email = "cogiaonho@yahoo.com";
-        p.save();
+        results = Database.rawQuery("SELECT t_id, t_name, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
+        Log.e("TAG", "Results: " + results);
 
-        p.name = "huongbt";
-        p.save();
+        Person.deleteByIds(new long[] {1, 2, 4, 8, 9, 10});
 
-        p.delete();
-
-        List<Person> lists = Person.find(String.format("t_id IN (1, 8, 97)"), null);
-        for (Person pe : lists) {
-            OrmLog.log("Person: " + pe.getId() + " : " + pe.name + " : " + pe.address + " : " + pe.email);
-            pe.delete();
-        }
-//
-//        List<Person> cursor = Person.rawQuery("SELECT * FROM t_person WHERE t_id = 21", null);
-//        if (cursor != null && cursor.size() > 0)
-//        for (Person pe : cursor) {
-//            OrmLog.log("Person: " + pe.getId() + " : " + pe.name + " : " + pe.address + " : " + pe.email);
-//        }
-//  cursor.close();
-
-//        List results = IModel.queryWithNoKey("SELECT * FROM t_person WHERE t_id = ?", new String[]{"1"});
-//        System.out.print(results);
-//
-        List<Person> persons = Person.findAll();
-
+        List<Person> persons = Person.findByColumn("t_id", "7");
+        Log.e("TAG", "Size: " + persons.size());
         for(Person pe : persons) {
-            OrmLog.log("Person: " + pe.getId() + " : " + pe.name + " : " + pe.address + " : " + pe.email);
+            OrmLog.log("PE: "
+                    + pe.getId() + " | "
+                    + pe.name + " | "
+                    + pe.address + " | "
+                    + pe.email + " | "
+                    + pe.birthday + " | "
+                    + pe.dt_created + " | "
+                    + pe.mon);
         }
 
-        //cursor.moveToNext();
-        // while (cursor.moveToNext());
+        int cnt = Person.deleteByColumn("t_id", "7");
+        Log.e("TAG", "Size: " + cnt);
+
         //
+        persons = Person.findAll();
+        Log.e("TAG", "Size: " + persons.size());
+        for(Person pe : persons) {
+            OrmLog.log("PE: "
+                    + pe.getId() + " | "
+                    + pe.name + " | "
+                    + pe.address + " | "
+                    + pe.email + " | "
+                    + pe.birthday + " | "
+                    + pe.dt_created + " | "
+                    + pe.mon);
+        }
     }
 }

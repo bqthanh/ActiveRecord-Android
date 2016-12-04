@@ -16,9 +16,6 @@ import java.util.List;
  */
 
 public class SQLiteUtils {
-    //モデール定義からデータベースを自動に作成する
-    public static boolean AUTO_CREATE_DB = true;
-
     //モデールにプライマリキーの変数を定義する
     public static String ID = "id";
 
@@ -37,7 +34,7 @@ public class SQLiteUtils {
         String name = c.getName();
         if (name.equals("java.lang.String"))
             return "text";
-        if (name.equals("short"))
+        if (name.equals("java.lang.Short"))
             return "int";
         if (name.equals("int"))
             return "int";
@@ -45,8 +42,8 @@ public class SQLiteUtils {
             return "int";
         if (name.equals("java.lang.Long"))
             return "int";
-        if (name.equals("java.sql.Timestamp"))
-            return "int";
+        if (name.equals("java.util.Date"))
+            return "date";
         if (name.equals("double"))
             return "real";
         if (name.equals("float"))
