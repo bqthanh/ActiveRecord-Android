@@ -39,14 +39,14 @@ public abstract class Model implements IModel {
     public long getId() { return id; }
 
     //対象オブジェクトと比較する
-    public boolean equals(Object obj) {
-        if (obj instanceof Model && this.id != 0) {
-            final Model other = (Model) obj;
+    public boolean equals(Object targetObj) {
+        if (targetObj instanceof Model && this.id != 0) {
+            final Model other = (Model) targetObj;
 
             return this.id == other.id
                     && (this.table.getName().equals(other.table.getName()));
         } else {
-            return this == obj;
+            return this == targetObj;
         }
     }
 
