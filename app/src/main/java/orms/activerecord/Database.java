@@ -54,7 +54,7 @@ public class Database  {
         return toRet;
     }
 
-    public static List queryWithNoKey(String sql, String[] params) {
+    public static List noKeyQuery(String sql, String[] params) {
         List<Map<String, String>> toRet = new ArrayList<>();
         int cnt;
         Map<String, String> row;
@@ -76,6 +76,42 @@ public class Database  {
             toRet.add(row);
         }
 
+        return toRet;
+    }
+
+    //クリエする
+    public static boolean execute(String sql) {
+        Boolean ret = false;
+
+        db.beginTransaction();
+        try {
+            db.execSQL(sql);
+            ret = true;
+        } catch (Exception e) {
+            OrmLog.log(e.getLocalizedMessage());
+        }
+
+        return  ret;
+    }
+
+    //個別インタフェース
+    public static boolean transactionWithSQL(List<String> sqlList) {
+        boolean toRet = false;
+
+        db.beginTransaction();
+        try {
+            for (String sql : sqlList) {
+                execute(sql);
+            }
+            db.setTransactionSuccessful();
+            toRet = true;
+
+        } catch (Exception e) {
+            OrmLog.log(e.getLocalizedMessage());
+        }
+        finally {
+            db.endTransaction();
+        }
         return toRet;
     }
 
@@ -125,9 +161,6 @@ public class Database  {
         return c;
     }
 
-    //クリエする
-    public static void execute(String sql) { db.execSQL(sql); }
-
     //クラスタイプからモデール情報を取得する
     public static Model.ModelManager getTableManger(Class<? extends Model> type) {
         return dbHelper.getDbBuilder()
@@ -135,12 +168,12 @@ public class Database  {
     }
 
     //データベースを開く
-    public static void open() {
+    private static void open() {
         db = dbHelper.open();
     }
 
     //データベースをクローズする
-    public static void close() { dbHelper.close(); }
+    private static void close() { dbHelper.close(); }
 
     //データベースヘルプ
     static class DatabaseHelper extends SQLiteOpenHelper {

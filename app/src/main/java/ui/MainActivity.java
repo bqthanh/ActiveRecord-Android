@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        List results = Database.queryWithNoKey("SELECT t_id, t_name, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
+        List results = Database.noKeyQuery("SELECT t_id, t_name, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
         Log.e("TAG", "Results: " + results);
 
         results = Database.rawQuery("SELECT t_id, t_name, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
