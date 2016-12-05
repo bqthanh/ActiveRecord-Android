@@ -5,7 +5,12 @@ package orms.activerecord.realization;
  */
 
 public interface IModel {
+
     public long getId();
+
+    public boolean equals(Object targetObj);
+
     public void save();
+
     public int delete();
 }
