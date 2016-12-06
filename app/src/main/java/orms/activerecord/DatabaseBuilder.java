@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import orms.activerecord.anotation.Column;
-import utils.OrmLog;
-import utils.SQLiteUtils;
+import orms.activerecord.anotations.Column;
+import orms.activerecord.utils.DBLog;
+import orms.activerecord.utils.SQLiteUtils;
 
 /**
  * Created by thanhbui on 2016/11/015.
@@ -41,11 +41,13 @@ public class DatabaseBuilder {
 
         //モデールのクラスタイプを初期する
         try {
-            Field typeField = type.getField("type");
-            typeField.setAccessible(true);
-            typeField.set(null, type);
+//            Field typeField = type.getField("type");
+//            typeField.setAccessible(true);
+//            typeField.set(null, type);
+
+//            DBLog.log("type: " + type);
         } catch (Exception e) {
-            OrmLog.log(e.getLocalizedMessage());
+            DBLog.log(e.getLocalizedMessage());
         }
     }
 
@@ -57,7 +59,7 @@ public class DatabaseBuilder {
     //初期の場合、テブール作成SQLを生成する
     public <T extends Model> String getSQLCreate(Class<T> type) {
         if (!tables.containsKey(type)) {
-            OrmLog.log("宣言していないテブール: " + type.getSimpleName());
+            DBLog.log("宣言していないテブール: " + type.getSimpleName());
             return "";
         }
 

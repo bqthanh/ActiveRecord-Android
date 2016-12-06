@@ -3,16 +3,17 @@ package ui;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import java.util.Date;
 import java.util.List;
 
-import model.Person;
+import models.Person;
+import models.Sport;
 import orms.activerecord.Database;
 import orms.activerecord.DatabaseBuilder;
+import orms.activerecord.Model;
 import orms.activerecord.R;
-import utils.OrmLog;
+import orms.activerecord.utils.DBLog;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,65 +32,99 @@ public class MainActivity extends AppCompatActivity {
         //データベース名
         String dbname = "db_name";
         //バージョンは１以上を指定してください
-        int version = 2;
+        int version = 3;
 
+        //以下の宣言が必須です
         DatabaseBuilder dbBuilder = new DatabaseBuilder(dbname, version);
         //テブール一覧を入力する
         dbBuilder.addModel(Person.class);
+        dbBuilder.addModel(Sport.class);
+        //データベースを初期する
         db = new Database(c, dbBuilder);
+        //此処まで
 
-        Person p;
+        Person person;
         for (int i = 0; i < 10; i++) {
             Date dt = null;
             if (i % 2 == 0) {
                 dt = new Date();
             }
-            p = new Person("thanhbui" + i, "t.buiquang@bs" + i, "東京" + i, true, dt);
-            p.save();
-            p.address = p.address + "港区芝浦";
+            person = new Person("thanhbui" + i, "12345678", "t.buiquang@bs" + i, "東京" + i, true, dt);
+            person.save();
+            person.address = person.address + "港区芝浦";
 
-            p.save();
+            person.save();
             if (i < 5) {
-                p.delete();
+                person.delete();
             }
         }
 
-        List results = Database.noKeyQuery("SELECT t_id, t_name, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
-        Log.e("TAG", "Results: " + results);
+        //Database API
+        List results = Database.noKeyQuery("SELECT t_id, t_password, t_username, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
+        DBLog.log("queryWithNoKey: " + results);
 
-        results = Database.rawQuery("SELECT t_id, t_name, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
-        Log.e("TAG", "Results: " + results);
+        results = Database.rawQuery("SELECT t_id, t_password, t_username, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
+        DBLog.log("rawQuery: " + results);
 
-        Person.deleteByIds(new long[] {1, 2, 4, 8, 9, 10});
+        Database.execute("UPDATE t_person SET t_username = 'dbhelper' WHERE t_id = 7");
+        Model.deleteByIds(Person.class, new long[] {1, 2, 4, 8, 9, 10});
 
-        List<Person> persons = Person.findByColumn("t_id", "7");
-        Log.e("TAG", "Size: " + persons.size());
-        for(Person pe : persons) {
-            OrmLog.log("PE: "
-                    + pe.getId() + " | "
-                    + pe.name + " | "
-                    + pe.address + " | "
-                    + pe.email + " | "
-                    + pe.birthday + " | "
-                    + pe.dt_created + " | "
-                    + pe.mon);
+        //Model API
+        List<Person> persons = Model.findByIds(Person.class, new long[] {1, 6, 9});
+        DBLog.log("1. Size: " + persons.size());
+
+        persons = Model.find(Person.class, String.format("%s LIKE ?", "t_password"),
+                new String[] {"123456%"});
+        DBLog.log("2. Size: " + persons.size());
+
+        persons = Model.findByColumn(Person.class, "t_id", "7");
+        DBLog.log("3. Size: " + persons.size());
+        for(Person p : persons) {
+            DBLog.log("Detailed person: "
+                    + p.getId() + " | "
+                    + p.username + " | "
+                    + p.password + " | "
+                    + p.address + " | "
+                    + p.email + " | "
+                    + p.birthday + " | "
+                    + p.createdDate + " | "
+                    + p.gender);
         }
 
-        int cnt = Person.deleteByColumn("t_id", "7");
-        Log.e("TAG", "Size: " + cnt);
+        int cnt = Model.deleteByColumn(Person.class, "t_id", "7");
+        DBLog.log("4. Size: " + cnt);
 
-        //
-        persons = Person.findAll();
-        Log.e("TAG", "Size: " + persons.size());
-        for(Person pe : persons) {
-            OrmLog.log("PE: "
-                    + pe.getId() + " | "
-                    + pe.name + " | "
-                    + pe.address + " | "
-                    + pe.email + " | "
-                    + pe.birthday + " | "
-                    + pe.dt_created + " | "
-                    + pe.mon);
+        persons = Model.findAll(Person.class);
+        DBLog.log("5. Size: " + persons.size());
+        for(Person p : persons) {
+            DBLog.log("Detailed person: "
+                    + p.getId() + " | "
+                    + p.username + " | "
+                    + p.password + " | "
+                    + p.address + " | "
+                    + p.email + " | "
+                    + p.birthday + " | "
+                    + p.createdDate + " | "
+                    + p.gender + " | "
+                    + p.modifiedDate);
+        }
+
+        Sport sport = new Sport();
+        sport.name = "Soccer";
+        sport.category = "Category 01";
+        sport.hours = 1000;
+        sport.save();
+
+        Database.execute("Update t_sport SET t_category = 'Swimming' WHERE t_id = 1");
+
+        List<Sport> sportList = Model.findAll(Sport.class);
+        for(Sport s : sportList) {
+            DBLog.log("Detailed sport: "
+                    + s.name + " | "
+                    + s.category + " | "
+                    + s.hours + " | "
+                    + s.createdDate + " | "
+                    + s.modifiedDate);
         }
     }
 }

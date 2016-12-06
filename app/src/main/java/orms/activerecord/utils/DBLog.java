@@ -1,4 +1,4 @@
-package utils;
+package orms.activerecord.utils;
 
 import android.util.Log;
 
@@ -8,7 +8,7 @@ import orms.activerecord.BuildConfig;
  * Created by thanhbui on 2016/11/17.
  */
 
-public class OrmLog {
+public class DBLog {
 
     public static String TAG = "Orms";
 

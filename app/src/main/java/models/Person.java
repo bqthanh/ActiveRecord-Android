@@ -1,10 +1,10 @@
-package model;
+package models;
 
 import java.util.Date;
 
 import orms.activerecord.Model;
-import orms.activerecord.anotation.Column;
-import orms.activerecord.anotation.Table;
+import orms.activerecord.anotations.Column;
+import orms.activerecord.anotations.Table;
 
 /**
  * Created by thanhbui on 2016/11/19.
@@ -12,11 +12,17 @@ import orms.activerecord.anotation.Table;
 
 @Table(id="t_id", name="t_person")
 public class Person extends Model {
-    @Column(name="t_name")
-    public String name;
+    @Column(name="t_username")
+    public String username;
+
+    @Column(name="t_password")
+    public String password;
 
     @Column(name="t_email")
     public String email;
+
+    @Column(name="t_sport")
+    public short sport_id;
 
     @Column(name="t_address")
     public String address;
@@ -28,15 +34,16 @@ public class Person extends Model {
     public Date birthday;
 
     @Column(name="dt_created")
-    public Date dt_created;
+    public Date createdDate;
 
-    @Column(name="t_mon")
-    public Short mon;
+    @Column(name="dt_modified")
+    public Date modifiedDate;
 
     public Person() {};
 
-    public Person(String name, String email, String address, Boolean gender, Date birthday) {
-        this.name = name;
+    public Person(String username, String passwd, String email, String address, Boolean gender, Date birthday) {
+        this.username = username;
+        this.password = passwd;
         this.email = email;
         this.address = address;
         this.gender = gender;
