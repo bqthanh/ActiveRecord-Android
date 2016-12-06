@@ -1,4 +1,4 @@
-package orms.activerecord.anotation;
+package orms.activerecord.anotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -12,13 +12,15 @@ import java.lang.annotation.Target;
  */
 
 @Documented
-@Target(ElementType.FIELD)
+@Target(ElementType.TYPE)
 @Inherited
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(value = RetentionPolicy.RUNTIME)
 
-public @interface Column {
+public @interface Table {
 
-    public static String BLANK = "";
+    public static final String ID_NAME = "id";
 
-    public String name() default BLANK;
+    public String id() default ID_NAME;
+
+    public String name();
 }

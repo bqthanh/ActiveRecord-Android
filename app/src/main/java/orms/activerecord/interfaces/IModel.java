@@ -1,4 +1,4 @@
-package orms.activerecord.realization;
+package orms.activerecord.interfaces;
 
 /**
  * Created by thanhbui on 2016/12/03.
