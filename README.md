@@ -27,7 +27,7 @@ Modelインタフェース
 + void save()
 + int delete()
 
-クラスメソッド
+## クラスメソッド
 + <T extends Model> T findById(Class<T> type, long id)
 + <T extends Model> List<T> findByIds(Class<T> type, long[] ids)
 + <T extends Model> List<T> find(Class<T> type, String whereClause, String[] whereArgs)
@@ -37,7 +37,7 @@ Modelインタフェース
 + <T extends Model> int delete(Class<T> type, String whereClause, String[] whereArgs)
 + <T extends Model>int deleteByColumn(Class<T> type, String column, String value)
 
-Databaseインタフェース
+## Databaseインタフェース
 クラスメソッド
 + List rawQuery(String sql, String[] params)
 + List queryWithNoKey(String sql, String[] params)
