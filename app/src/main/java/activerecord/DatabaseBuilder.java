@@ -1,4 +1,4 @@
-package orms.activerecord;
+package activerecord;
 
 import android.text.TextUtils;
 
@@ -8,9 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import orms.activerecord.anotations.Column;
-import orms.activerecord.utils.DBLog;
-import orms.activerecord.utils.SQLiteUtils;
+import activerecord.anotations.Column;
 
 /**
  * Created by thanhbui on 2016/11/015.
@@ -45,9 +43,9 @@ public class DatabaseBuilder {
 //            typeField.setAccessible(true);
 //            typeField.set(null, type);
 
-//            DBLog.log("type: " + type);
+//            AppLog.log("type: " + type);
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
     }
 
@@ -58,8 +56,9 @@ public class DatabaseBuilder {
 
     //初期の場合、テブール作成SQLを生成する
     public <T extends Model> String getSQLCreate(Class<T> type) {
+        String colName, colType;
         if (!tables.containsKey(type)) {
-            DBLog.log("宣言していないテブール: " + type.getSimpleName());
+            AppLog.log("宣言していないテブール: " + type.getSimpleName());
             return "";
         }
 
@@ -68,25 +67,18 @@ public class DatabaseBuilder {
         List<Field> columns = tbl.getColumnFields();
 
         for (Field column : columns) {
-            String colName = (SQLiteUtils.ID.equals(column.getName())) ? tbl.id
-                    : column.getAnnotation(Column.class).name();
-
-            String stype = SQLiteUtils.getSQLiteTypeString(
-                    column.getType());
-
+            colName = (SQLiteUtils.ID.equals(column.getName())) ? tbl.id : column.getAnnotation(Column.class).name();
+            colType = SQLiteUtils.getSQLiteTypeString(column.getType());
             if (!TextUtils.isEmpty(sb.toString())) {
                 sb.append(", ");
             }
-            sb.append(colName)
-                    .append(" ");
-
+            sb.append(colName).append(" ");
             if (SQLiteUtils.ID.equals(column.getName())) {
                 sb.append("INTEGER PRIMARY KEY AUTOINCREMENT");
             } else {
-                sb.append(stype);
+                sb.append(colType);
             }
         }
-
         return String.format("CREATE TABLE %s (%s)", tbl.getName(), sb.toString());
     }
 
