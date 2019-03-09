@@ -2,9 +2,9 @@ package models;
 
 import java.util.Date;
 
-import orms.activerecord.Model;
-import orms.activerecord.anotations.Column;
-import orms.activerecord.anotations.Table;
+import activerecord.Model;
+import activerecord.anotations.Column;
+import activerecord.anotations.Table;
 
 /**
  * Created by thanhbui on 2016/11/19.

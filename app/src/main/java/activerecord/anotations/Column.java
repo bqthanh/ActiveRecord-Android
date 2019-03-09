@@ -1,4 +1,4 @@
-package orms.activerecord.anotations;
+package activerecord.anotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -17,8 +17,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 
 public @interface Column {
-
-    public static String BLANK = "";
-
-    public String name() default BLANK;
+    String BLANK = "";
+    String name() default BLANK;
 }

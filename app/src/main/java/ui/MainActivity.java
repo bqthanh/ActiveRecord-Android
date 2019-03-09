@@ -7,16 +7,15 @@ import android.support.v7.app.AppCompatActivity;
 import java.util.Date;
 import java.util.List;
 
+import activerecord.AppLog;
+import activerecord.R;
 import models.Person;
 import models.Sport;
-import orms.activerecord.Database;
-import orms.activerecord.DatabaseBuilder;
-import orms.activerecord.Model;
-import orms.activerecord.R;
-import orms.activerecord.utils.DBLog;
+import activerecord.Database;
+import activerecord.DatabaseBuilder;
+import activerecord.Model;
 
 public class MainActivity extends AppCompatActivity {
-
     public static Database db;
 
     @Override
@@ -24,11 +23,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initilize(this);
+        initialize(this);
     }
 
     //データベースを初期する
-    public static void initilize(Context c) {
+    public static void initialize(Context c) {
         //データベース名
         String dbname = "db_name";
         //バージョンは１以上を指定してください
@@ -60,27 +59,32 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //Database API
+<<<<<<< HEAD
         List results = Database.noKeyQuery("SELECT t_id, t_password, t_username, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
         DBLog.log("queryWithNoKey: " + results);
+=======
+        List results = Database.queryWithNoKey("SELECT t_id, t_password, t_username, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
+        AppLog.log("queryWithNoKey: " + results);
+>>>>>>> dev
 
         results = Database.rawQuery("SELECT t_id, t_password, t_username, dt_birthday FROM t_person WHERE t_id IN ( 6, 2, 4, 8, 9, 10 )", null);
-        DBLog.log("rawQuery: " + results);
+        AppLog.log("rawQuery: " + results);
 
         Database.execute("UPDATE t_person SET t_username = 'dbhelper' WHERE t_id = 7");
         Model.deleteByIds(Person.class, new long[] {1, 2, 4, 8, 9, 10});
 
         //Model API
         List<Person> persons = Model.findByIds(Person.class, new long[] {1, 6, 9});
-        DBLog.log("1. Size: " + persons.size());
+        AppLog.log("1. Size: " + persons.size());
 
         persons = Model.find(Person.class, String.format("%s LIKE ?", "t_password"),
                 new String[] {"123456%"});
-        DBLog.log("2. Size: " + persons.size());
+        AppLog.log("2. Size: " + persons.size());
 
         persons = Model.findByColumn(Person.class, "t_id", "7");
-        DBLog.log("3. Size: " + persons.size());
+        AppLog.log("3. Size: " + persons.size());
         for(Person p : persons) {
-            DBLog.log("Detailed person: "
+            AppLog.log("Detailed person: "
                     + p.getId() + " | "
                     + p.username + " | "
                     + p.password + " | "
@@ -92,12 +96,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         int cnt = Model.deleteByColumn(Person.class, "t_id", "7");
-        DBLog.log("4. Size: " + cnt);
+        AppLog.log("4. Size: " + cnt);
 
         persons = Model.findAll(Person.class);
-        DBLog.log("5. Size: " + persons.size());
+        AppLog.log("5. Size: " + persons.size());
         for(Person p : persons) {
-            DBLog.log("Detailed person: "
+            AppLog.log("Detailed person: "
                     + p.getId() + " | "
                     + p.username + " | "
                     + p.password + " | "
@@ -119,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
 
         List<Sport> sportList = Model.findAll(Sport.class);
         for(Sport s : sportList) {
-            DBLog.log("Detailed sport: "
+            AppLog.log("Detailed sport: "
                     + s.name + " | "
                     + s.category + " | "
                     + s.hours + " | "

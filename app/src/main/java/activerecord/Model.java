@@ -1,4 +1,4 @@
-package orms.activerecord;
+package activerecord;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -10,17 +10,15 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import orms.activerecord.anotations.Column;
-import orms.activerecord.anotations.Table;
-import orms.activerecord.interfaces.IModel;
-import orms.activerecord.utils.DBLog;
-import orms.activerecord.utils.SQLiteUtils;
+import activerecord.anotations.Column;
+import activerecord.anotations.Table;
+import activerecord.interfaces.ModelOperator;
 
 /**
  * Created by thanhbui on 2016/11/17.
  */
 
-public class Model implements IModel {
+public class Model implements ModelOperator {
     //モデールのクラスタイプ
     //private Class <? extends Model> type;
     //メーデールの主なカギ
@@ -52,6 +50,7 @@ public class Model implements IModel {
     }
 
     //データベースにモデルオブジェクトを保存する
+    @Override
     public void save() {
         List<Field> columns = table.getColumnFields();
         ContentValues values = new ContentValues(table.getSize());
@@ -59,7 +58,6 @@ public class Model implements IModel {
 
         for (Field column : columns) {
             column.setAccessible(true);
-
             if(SQLiteUtils.ID.equals(column.getName())) {
                 if(id == 0) continue;
                 colName = table.id;
@@ -70,7 +68,7 @@ public class Model implements IModel {
                 Object obj = column.get(this);
                 values.put(colName, (obj == null) ? "" : String.valueOf(obj));
             } catch (Exception ex) {
-                DBLog.log(ex.getLocalizedMessage());
+                AppLog.log(ex.getLocalizedMessage());
             }
         }
         if (id == 0) {
@@ -82,8 +80,7 @@ public class Model implements IModel {
     }
 
     public int delete() {
-        int toRet = Database.delete(table.getName(), table.id + " = ?",
-                new String[] { String.valueOf(id) });
+        int toRet = Database.delete(table.getName(), table.id + " = ?", new String[] { String.valueOf(id) });
         return toRet;
     }
 
@@ -94,28 +91,27 @@ public class Model implements IModel {
         T entity = null;
 
         try {
-            entity = (T) type.newInstance();
+            entity = type.newInstance();
         } catch (Exception ex) {
-            DBLog.log(ex.getLocalizedMessage());
+            AppLog.log(ex.getLocalizedMessage());
         }
 
         Cursor c = null;
         try {
-            c = Database.query(entity.table.getName(), null, entity.table.id + " = ?",
-                    new String[] { String.valueOf(id) });
+            c = Database.query(entity.table.getName(), null, entity.table.id + " = ?", new String[] { String.valueOf(id) });
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
 
         entity = null;
         try {
             while (c.moveToNext()) {
-                entity = (T) type.newInstance();
-                entity.loadRecord(c);
+                entity = type.newInstance();
+                entity.getRecord(c);
                 break;
             }
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         finally {
             c.close();
@@ -130,9 +126,9 @@ public class Model implements IModel {
         T entity = null;
 
         try {
-            entity = (T) type.newInstance();
+            entity = type.newInstance();
         } catch (Exception ex) {
-            DBLog.log(ex.getLocalizedMessage());
+            AppLog.log(ex.getLocalizedMessage());
         }
 
         List<T> toRet = new ArrayList<>();
@@ -146,17 +142,17 @@ public class Model implements IModel {
             c = Database.query(entity.table.getName(), null,
                     String.format(entity.table.id + " IN ( %s )", idList), null);
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
 
         try {
             while (c.moveToNext()) {
-                entity = (T) type.newInstance();
-                entity.loadRecord(c);
+                entity = type.newInstance();
+                entity.getRecord(c);
                 toRet.add(entity);
             }
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         finally {
             c.close();
@@ -168,22 +164,21 @@ public class Model implements IModel {
         T entity = null;
 
         try {
-            entity = (T) type.newInstance();
+            entity = type.newInstance();
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
 
         List<T> toRet = new ArrayList<T>();
-        Cursor c = Database.query(entity.table.getName(), null, whereClause,
-                whereArgs);
+        Cursor c = Database.query(entity.table.getName(), null, whereClause, whereArgs);
         try {
             while (c.moveToNext()) {
-                entity = (T) type.newInstance();
-                entity.loadRecord(c);
+                entity = type.newInstance();
+                entity.getRecord(c);
                 toRet.add(entity);
             }
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         } finally {
             c.close();
         }
@@ -203,9 +198,9 @@ public class Model implements IModel {
     public static <T extends Model> int deleteById(Class<T> type, long id) {
         T entity = null;
         try {
-            entity = (T) type.newInstance();
+            entity = type.newInstance();
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         return delete(type, entity.table.id,
                 new String[] {String.valueOf(id)});
@@ -214,9 +209,9 @@ public class Model implements IModel {
     public static <T extends Model> int deleteByIds(Class<T> type, long[] ids) {
         T entity = null;
         try {
-            entity = (T) type.newInstance();
+            entity = type.newInstance();
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         String idList = "";
         for (long id : ids) {
@@ -229,9 +224,9 @@ public class Model implements IModel {
     public static <T extends Model> int delete(Class<T> type, String whereClause, String[] whereArgs) {
         T entity = null;
         try {
-            entity = (T) type.newInstance();
+            entity = type.newInstance();
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         return Database.delete(entity.table.getName(), whereClause, whereArgs);
     }
@@ -247,53 +242,48 @@ public class Model implements IModel {
 //    }
 
     //カソールからレコードコラムデータを取得する
-    void loadRecord(Cursor c) throws Exception {
-        String typeString = null, colName = null;
+    void getRecord(Cursor c) {
+        String typeString = null, colName;
 
         for (Field field : table.getColumnFields()) {
             field.setAccessible(true);
             try {
                 typeString = field.getType().getName();
-                colName = (SQLiteUtils.ID.equals(field.getName())) ? table.id
-                        : field.getAnnotation(Column.class).name();
-
+                colName = (SQLiteUtils.ID.equals(field.getName())) ? table.id : field.getAnnotation(Column.class).name();
 
                 if (typeString.equals("java.lang.String")) {
                     String val = c.getString(c.getColumnIndex(colName));
                     field.set(this, val.equals("null") ? null : val);
                 } else if (typeString.equals("short")
                         || typeString.equals("java.lang.Short")) {
-                    field.set(this, c.getShort(
-                            c.getColumnIndex(colName)));
-                } else if (typeString.equals("int")) {
-                    field.setInt(this, c.getInt(
-                            c.getColumnIndex(colName)));
+                    field.set(this, c.getShort(c.getColumnIndex(colName)));
+                } else if (typeString.equals("int")
+                        || typeString.equals("java.lang.Integer")) {
+                    field.setInt(this, c.getInt(c.getColumnIndex(colName)));
                 } else if (typeString.equals("long")
                         || typeString.equals("java.lang.Long")) {
-                    field.set(this, c.getLong(
-                            c.getColumnIndex(colName)));
-                } else if (typeString.equals("float")) {
-                    field.setFloat(this, c.getFloat(
-                            c.getColumnIndex(colName)));
-                } else if (typeString.equals("double")) {
-                    field.setDouble(this, c.getDouble(c
-                            .getColumnIndex(colName)));
+                    field.set(this, c.getLong(c.getColumnIndex(colName)));
+                } else if (typeString.equals("float")
+                        || typeString.equals("java.lang.Float")) {
+                    field.setFloat(this, c.getFloat(c.getColumnIndex(colName)));
+                } else if (typeString.equals("double")
+                        || typeString.equals("java.lang.Double")) {
+                    field.setDouble(this, c.getDouble(c.getColumnIndex(colName)));
                 } else if (typeString.equals("java.util.Date")) {
                     String s = c.getString(c.getColumnIndex(colName));
                     if (s != null && !TextUtils.isEmpty(s)) {
                         field.set(this, new Date(s));
                     }
                 } else if (typeString.equals("java.lang.Boolean")) {
-                    field.set(this, c.getString(
-                            c.getColumnIndex(colName)).equals("true"));
+                    field.set(this, c.getString(c.getColumnIndex(colName)).equals("true"));
                 } else if (typeString.equals("[B")) {
                     field.set(this, c.getBlob(c.getColumnIndex(colName)));
+                } else {
+                    throw new Exception("データタイプ以外：" + typeString + " : " + colName);
                 }
-                else
-                    throw new Exception(
-                            "データタイプ以外：" + typeString + " : " + colName);
-            } catch (IllegalArgumentException e) {
-                DBLog.log("モデール" + typeString + " : " + e.getLocalizedMessage());
+
+            } catch (Exception e) {
+                AppLog.log("モデール" + typeString + " : " + e.getLocalizedMessage());
             }
         }
     }

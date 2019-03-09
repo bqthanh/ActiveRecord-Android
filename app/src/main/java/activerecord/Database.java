@@ -1,4 +1,4 @@
-package orms.activerecord;
+package activerecord;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import orms.activerecord.utils.DBLog;
 
 /**
  * Created by thanhbui on 2016/11/17.
@@ -37,7 +35,7 @@ public class Database  {
         try {
             c = db.rawQuery(sql, params);
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
             return null;
         }
         cnt = c.getColumnCount();
@@ -62,7 +60,7 @@ public class Database  {
         try {
             c = db.rawQuery(sql, params);
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
             return null;
         }
         cnt = c.getColumnCount();
@@ -78,6 +76,7 @@ public class Database  {
         return toRet;
     }
 
+<<<<<<< HEAD:app/src/main/java/orms/activerecord/Database.java
     public static boolean execute(String sql) {
         Boolean ret = false;
 
@@ -92,6 +91,8 @@ public class Database  {
         return  ret;
     }
 
+=======
+>>>>>>> dev:app/src/main/java/activerecord/Database.java
     //個別インタフェース
     public static boolean transactionWithSQL(List<String> sqlList) {
         boolean toRet = false;
@@ -105,7 +106,7 @@ public class Database  {
             toRet = true;
 
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         finally {
             db.endTransaction();
@@ -121,7 +122,7 @@ public class Database  {
             id = db.insert(table, null, values);
             db.setTransactionSuccessful();
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         finally {
             db.endTransaction();
@@ -137,7 +138,7 @@ public class Database  {
             cnt = db.update(table, values, whereClause, whereArgs);
             db.setTransactionSuccessful();
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         finally {
             db.endTransaction();
@@ -152,7 +153,7 @@ public class Database  {
             id = db.delete(table, whereClause, whereArgs);
             db.setTransactionSuccessful();
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         } finally {
             db.endTransaction();
         }
@@ -166,11 +167,28 @@ public class Database  {
             c = db.query(table, selectColumns, where, whereArgs, null, null,
                     null, null);
         } catch (Exception e) {
-            DBLog.log(e.getLocalizedMessage());
+            AppLog.log(e.getLocalizedMessage());
         }
         return c;
     }
 
+<<<<<<< HEAD:app/src/main/java/orms/activerecord/Database.java
+=======
+    //クリエする
+    public static void execute(String sql) {
+        db.beginTransaction();
+        try {
+            db.execSQL(sql);
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            AppLog.log(e.getLocalizedMessage());
+        }
+        finally {
+            db.endTransaction();
+        }
+    }
+
+>>>>>>> dev:app/src/main/java/activerecord/Database.java
     //クラスタイプからモデール情報を取得する
     public static Model.ModelManager getTableManger(Class<? extends Model> type) {
         return dbHelper.getDbBuilder()
@@ -199,13 +217,13 @@ public class Database  {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-            DBLog.log("onCreate !");
+            AppLog.log("On create!");
             executeMigrations(db, -1, dbBuilder.version);
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            DBLog.log("onUpgrade !");
+            AppLog.log("On upgrade!");
             executeMigrations(db, oldVersion, newVersion);
         }
 
@@ -215,18 +233,14 @@ public class Database  {
             db.beginTransaction();
             try {
                 if (AUTO_CREATE_DB == true) {
-                    DBLog.log("FromModel !");
                     upgradeFromModel(db);
                 } else {
-                    DBLog.log("FromSQLScript !");
                     upgradeFromSQLScript(db, oldversion, newVersion);
                 }
-
-                DBLog.log("Execute migrations has finish !");
                 ret = true;
                 db.setTransactionSuccessful();
             } catch (Exception e) {
-                DBLog.log(e.getLocalizedMessage());
+                AppLog.log(e.getLocalizedMessage());
             } finally {
                 db.endTransaction();
             }
@@ -246,29 +260,29 @@ public class Database  {
                     }
                     //テブールを作成する
                     sql = dbBuilder.getSQLCreate(table);
-                    DBLog.log("SQLCreate: " + sql);
                     if (sql != null) {
                         db.execSQL(sql);
                     }
+                    AppLog.log("SQL create: " + sql);
                 }
             } catch (Exception e) {
-                DBLog.log(e.getLocalizedMessage());
+                AppLog.log(e.getLocalizedMessage());
             }
         }
 
         //SQLスクリプからアップグレード
-        public void upgradeFromSQLScript(SQLiteDatabase db, int oldVersion, int newVersion) throws Exception {
+        public void upgradeFromSQLScript(SQLiteDatabase db, int oldVersion, int newVersion) {
             int index = 1;
 
             for (List<String> builder : QueryBuilder.getBuilder()) {
                 if(index > oldVersion && index <= newVersion) {
                     for (String sql : builder) {
-                        DBLog.log("SQLCreate: " + sql);
                         try {
                             db.execSQL(sql);
                         } catch (Exception e) {
-                            DBLog.log(e.getLocalizedMessage());
+                            AppLog.log(e.getLocalizedMessage());
                         }
+                        AppLog.log("Upgrade from sql script: " + sql);
                     }
                 }
                 index ++;
@@ -276,7 +290,7 @@ public class Database  {
         }
 
         public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            DBLog.log("onDowngrade !");
+            AppLog.log("On downgrade!");
         }
 
         public DatabaseBuilder getDbBuilder() { return dbBuilder; }
